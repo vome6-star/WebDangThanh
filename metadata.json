@@ -1,0 +1,5 @@
+{
+  "name": "Mine Tunnel Image Generator2",
+  "description": "An application that generates images of coal mine tunnels based on user-provided text descriptions, using the Gemini API.",
+  "requestFramePermissions": []
+}
