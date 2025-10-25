@@ -4,6 +4,7 @@ import MainTab from './components/MainTab';
 import SettingsTab from './components/SettingsTab';
 import { HomeIcon, SettingsIcon, ErrorIcon } from './components/Icons';
 import { LoadingSpinner } from './components/LoadingSpinner';
+import { ApiKeyModal } from './components/ApiKeyModal';
 
 type Tab = 'generator' | 'settings';
 
@@ -12,6 +13,10 @@ const App: React.FC = () => {
   const [githubToken, setGithubToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // State for Gemini API key and modal
+  const [geminiApiKey, setGeminiApiKey] = useState<string | null>(() => localStorage.getItem('gemini_api_key'));
+  const [isApiModalOpen, setIsApiModalOpen] = useState(false);
 
   useEffect(() => {
     const initialize = async () => {
@@ -29,6 +34,13 @@ const App: React.FC = () => {
     };
     initialize();
   }, []);
+
+  const handleSaveApiKey = (key: string) => {
+    localStorage.setItem('gemini_api_key', key);
+    setGeminiApiKey(key);
+  };
+
+  const effectiveApiKey = geminiApiKey || process.env.API_KEY;
 
   const renderContent = () => {
     if (isLoading) {
@@ -50,9 +62,26 @@ const App: React.FC = () => {
       );
     }
 
+    // Prompt for API key if none is available
+    if (!effectiveApiKey) {
+      return (
+        <div className="flex flex-col items-center justify-center h-64 text-amber-400 bg-amber-900/20 border border-amber-500/30 rounded-lg p-8">
+            <SettingsIcon className="w-12 h-12 mb-4" />
+            <h2 className="text-xl font-bold mb-2">Gemini API Key Required</h2>
+            <p className="text-center mb-4">Please set your Gemini API key to start generating images.</p>
+            <button 
+                onClick={() => setIsApiModalOpen(true)}
+                className="px-4 py-2 bg-amber-500 text-slate-900 font-bold rounded-md hover:bg-amber-400"
+            >
+                Set API Key
+            </button>
+        </div>
+      );
+    }
+
     switch (activeTab) {
       case 'generator':
-        return <MainTab githubToken={githubToken} />;
+        return <MainTab githubToken={githubToken} apiKey={effectiveApiKey} />;
       case 'settings':
         return <SettingsTab githubToken={githubToken} />;
       default:
@@ -86,13 +115,28 @@ const App: React.FC = () => {
       <main className="flex-grow w-full max-w-7xl mx-auto p-4 md:p-8">
         {renderContent()}
       </main>
+
+      {/* Floating Settings Button and Modal */}
+      <button 
+        onClick={() => setIsApiModalOpen(true)}
+        className="fixed bottom-6 right-6 p-3 bg-slate-700 rounded-full shadow-lg hover:bg-amber-500 hover:text-slate-900 transition-colors z-30"
+        aria-label="Configure API Key"
+      >
+          <SettingsIcon className="w-6 h-6" />
+      </button>
+      
+      <ApiKeyModal 
+        isOpen={isApiModalOpen}
+        onClose={() => setIsApiModalOpen(false)}
+        onSave={handleSaveApiKey}
+        currentApiKey={geminiApiKey}
+      />
     </div>
   );
 };
 
 interface TabButtonProps {
     label: string;
-    // Fix: Made icon prop type more specific to allow passing className with React.cloneElement.
     icon: React.ReactElement<{ className?: string }>;
     isActive: boolean;
     onClick: () => void;

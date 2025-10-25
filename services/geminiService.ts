@@ -1,13 +1,5 @@
 import { GoogleGenAI, Modality } from "@google/genai";
 
-const API_KEY = process.env.API_KEY;
-
-if (!API_KEY) {
-  throw new Error("API_KEY environment variable is not set.");
-}
-
-const ai = new GoogleGenAI({ apiKey: API_KEY });
-
 export interface GeneratedImage {
   id: string;
   src: string;
@@ -22,9 +14,14 @@ const enhancePrompt = (prompt: string): string => {
 };
 
 export const generateImage = async (
+  apiKey: string,
   prompt: string,
   referenceImage: { data: string; mimeType: string } | null,
 ): Promise<string> => {
+  if (!apiKey) {
+    throw new Error("Gemini API Key is missing. Please set it in the settings.");
+  }
+  const ai = new GoogleGenAI({ apiKey });
   const finalPrompt = enhancePrompt(prompt);
 
   try {
@@ -32,7 +29,6 @@ export const generateImage = async (
       // Use gemini-2.5-flash-image for editing/image-to-image
       const response = await ai.models.generateContent({
         model: 'gemini-2.5-flash-image',
-        // Fix: 'contents' for a single-turn multimodal request should be an object with a 'parts' array, not an array of Content objects.
         contents: {
           parts: [
             {

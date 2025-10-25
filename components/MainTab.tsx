@@ -498,9 +498,10 @@ const GalleryModal: React.FC<GalleryModalProps> = ({ images, currentIndex, onClo
 // --- MainTab Component ---
 interface MainTabProps {
     githubToken: string;
+    apiKey: string;
 }
 
-const MainTab: React.FC<MainTabProps> = ({ githubToken }) => {
+const MainTab: React.FC<MainTabProps> = ({ githubToken, apiKey }) => {
   const [images, setImages] = useLocalStorage<GeneratedImage[]>('generatedImages', []);
   const [prompt, setPrompt] = useState<string>('A dark, wet coal mine tunnel, with glistening walls and a single rail track disappearing into the darkness.');
   const [referenceImage, setReferenceImage] = useState<{ file: File, preview: string } | null>(null);
@@ -584,7 +585,7 @@ const MainTab: React.FC<MainTabProps> = ({ githubToken }) => {
           refImgPart = await urlToGenerativePart(getRawFileUrl(selectedRemoteRef.path));
       }
       
-      const imageUrl = await generateImage(basePrompt, refImgPart);
+      const imageUrl = await generateImage(apiKey, basePrompt, refImgPart);
       const newImage: GeneratedImage = {
         id: crypto.randomUUID(),
         src: imageUrl,
@@ -602,7 +603,7 @@ const MainTab: React.FC<MainTabProps> = ({ githubToken }) => {
     } finally {
       setIsLoading(false);
     }
-  }, [referenceImage, selectedRemoteRef, setImages, modalIndex]);
+  }, [referenceImage, selectedRemoteRef, setImages, modalIndex, apiKey]);
 
   const handleDeleteImage = (id: string) => {
     setImages(prev => prev.filter(img => img.id !== id));
